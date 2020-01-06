@@ -3,10 +3,11 @@
 		<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
 		<script>
 			var global=global||globalThis||window;
+			global.global=global;
+			
 			class pack{
 			
 				static onStart(){
-					global.global=global;
 					global.pack=this;
 					this.doCORSRequest({method:'GET',url:'http://content.warframe.com/dynamic/worldState.php'},function({target}){if(target.readyState===4&&target.status===200){document.body.innerText='JSON loaded.';global.wfJSON=JSON.parse(target.response);console.log(global.wfJSON);}});
 				}
