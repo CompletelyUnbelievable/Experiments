@@ -9,7 +9,16 @@
 			
 				static onStart(){
 					global.pack=this;
-					this.doCORSRequest({method:'GET',url:'http://content.warframe.com/dynamic/worldState.php'},function({target}){if(target.readyState===4&&target.status===200){document.body.innerText='JSON loaded.';global.wfJSON=JSON.parse(target.response);console.log(global.wfJSON);}});
+					this.doCORSRequest(
+						{method:'GET',url:'http://content.warframe.com/dynamic/worldState.php'},
+						function({target}){
+							if(target.readyState===4&&target.status===200){
+								document.body.innerText='JSON loaded.';
+								global.wfJSON=JSON.parse(target.response);
+								console.log(global.wfJSON);
+							}
+						}
+					);
 				}
 			
 				static checkForValidURL(str){
