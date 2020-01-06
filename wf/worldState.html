@@ -13,11 +13,17 @@
 						{method:'GET',url:'http://content.warframe.com/dynamic/worldState.php'},
 						function({target}){
 							if(target.readyState===4&&target.status===200){
-								document.body.innerText='JSON loaded.';
-								global.wfJSON=JSON.parse(target.response);
-								console.log(global.wfJSON);
+								document.body.getElementsByTagName('h2')[0].innerText='JSON loaded.';
+								global.wfJSON=!!this.isJSON(target.response)?JSON.parse(target.response):null;
+								console.log(`[WorldState] loaded JSON:`,global.wfJSON);
+								let list=document.body.getElementsByClassName('list')[0];
+								this.forEachObj(global.wfJSON,
+									function(value,name,index,arr){
+										list.append(this.parseHTML(`<li>${name}: ${!!this.isJSON(value)?JSON.stringify(value):value}</li>`)[0]);
+									}.bind(this)
+								);
 							}
-						}
+						}.bind(this)
 					);
 				}
 			
@@ -34,16 +40,34 @@
 					if(/^POST/i.test(options.method))xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 					xhr.send(options.data);
 				}
+				
 				static isJSON(str=undefined){
 					if(!str||str.constructor!==String)return false;
 					if(/^[\r\n]+$/g.test(str))return false;//newlines break json parsing.
 					else if(/^0[0-9\.]*$/g.test(str)&&/^0[^\.][0-9\.]*$/g.test(str))return false;//Numbers that start with a zero are not parseable, floats can only start with a zero in the ones place
 					return /^[\],:{}\s]*$/.test(str.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,'@').replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,']').replace(/(?:^|:|,)(?:\s*\[)+/g,''));
 				}
+				
+				static forEachObj(obj=undefined,func=undefined){//https://stackoverflow.com/a/37616104
+					if(!obj||!func||obj.constructor!==Object||func.constructor!==Function)return null;
+					return Object.keys(obj).forEach(function(){let arg=Array.from(arguments);arg.unshift(obj[arguments[0]]);func.apply(this,arg);});//Pass the object's value first then pass normal forEach arguements.
+				}
+				
+				static parseHTML(html=[]){
+					if(html.constructor===String&&/(<[^<>]+>)/g.test(html)){
+						var template=document.createElement('template');
+						template.innerHTML=html.trim();
+						return template.content.childNodes;
+					}
+					return null;
+				}
 			}
 			pack.onStart();
 		</script>
 	</head>
-	<body></body>
+	<body>
+	<h2></h2>
+	<div><ul class="list"></ul></div>
+	</body>
 	<footer></footer>
 </html>
