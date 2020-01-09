@@ -1,5 +1,7 @@
+<!DOCTYPE html>
 <html lang="en">
 	<head>
+		<title>worldState</title>
 		<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
 		<script>
 			var global=global||globalThis||window;
@@ -7,24 +9,45 @@
 			
 			class pack{
 			
+				static constructor(){
+					this.wfJSON={};
+					this.header=document.body.getElementsByTagName('h2')[0];
+					this.listEle=document.body.getElementsByClassName('list')[0];
+				}
+			
 				static onStart(){
 					global.pack=this;
+					this.constructor();
 					this.doCORSRequest(
 						{method:'GET',url:'http://content.warframe.com/dynamic/worldState.php'},
 						function({target}){
 							if(target.readyState===4&&target.status===200){
-								document.body.getElementsByTagName('h2')[0].innerText='JSON loaded.';
-								global.wfJSON=!!this.isJSON(target.response)?JSON.parse(target.response):null;
-								console.log(`[WorldState] loaded JSON:`,global.wfJSON);
-								let list=document.body.getElementsByClassName('list')[0];
-								this.forEachObj(global.wfJSON,
-									function(value,name,index,arr){
-										list.append(this.parseHTML(`<li>${name}: ${!!this.isJSON(value)?JSON.stringify(value):value}</li>`)[0]);
-									}.bind(this)
-								);
+								this.header.innerText='JSON loaded.';
+								this.wfJSON=this.parse(target.response);
+								this.wfJSON.Tmp=this.parse(this.wfJSON.Tmp);
+								this.jsonLoaded();
 							}
 						}.bind(this)
 					);
+				}
+				
+				static jsonLoaded(){
+					console.log(`[WorldState] loaded JSON:`,this.wfJSON);
+					if(this.listEle instanceof Element){this.forEachObj(this.wfJSON,function(value,name,index,arr){this.listEle.append(this.parseHTML(`<li>${name}: ${this.handleStringify(value)}</li>`)[0]);}.bind(this));}
+				}
+				
+				static handleStringify(v=undefined){
+					if(!this.isAssigned(v))return v+'';
+					if(v.constructor===String)return v;
+					else if(v.constructor===Number)return v.toString();
+					else if(v.constructor===Object)return Object.keys(v)===0?'{}':JSON.stringify(v);
+					else if(v.constructor===Array)return v.length===0?'[]':JSON.stringify(v);
+					return null;
+				}
+				
+				static isAssigned(v){//Check if something is assigned anything remotely notable.
+					v=this.parse(v,{preserveFullNumbers:true});
+					return v==null||Number.isNaN(v)?false:true;
 				}
 			
 				static checkForValidURL(str){
@@ -34,9 +57,9 @@
 				
 				static doCORSRequest(options=undefined,func=undefined){
 					if(!options||!func||options.constructor!==Object||func.constructor!==Function||options.url.constructor!==String||options.method.constructor!==String||!this.checkForValidURL(options.url))return null;
-					var xhr=new XMLHttpRequest();
+					var xhr=new XMLHttpRequest(),proxyUrls=['https://cors-anywhere.herokuapp.com/','https://cors.x7.workers.dev/'];
 					xhr.onreadystatechange=func;
-					xhr.open(options.method,'https://cors-anywhere.herokuapp.com/'+options.url);
+					xhr.open(options.method,proxyUrls[0]+options.url);
 					if(/^POST/i.test(options.method))xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 					xhr.send(options.data);
 				}
@@ -61,13 +84,73 @@
 					}
 					return null;
 				}
+				
+				static parse(value=undefined,options={}){//Parses individual strings, entire arrays and objects.
+					if(!this.ofTypes(value,[Object,Array,String]))return value;
+					options=this.ofTypes(options,[Object])?Object.assign({preserveFullNumbers:false,ignoreNumbers:false},options):{preserveFullNumbers:false,ignoreNumbers:false};
+					if(this.ofTypes(value,[Object])){
+						var parseObj=function(obj={}){if(!obj||obj.constructor!==Object||Object.keys(obj).length===0)return obj;Object.keys(obj).forEach((v)=>{obj[v]=this.parse(obj[v],options)});return obj;}.bind(this);
+						return parseObj(value);
+					}else if(this.ofTypes(value,[Array])){
+						var parseArr=function(arr=[]){if(!arr||arr.constructor!==Array||arr.length===0)return arr;return arr.map((v)=>{return this.parse(v,options)});}.bind(this);
+						return parseArr(value);
+					}else if(this.ofTypes(value,[String])){
+						//Non parsable values, will throw error if tried to parse.
+						if(/^nan$/gi.test(value))return NaN;
+						else if(/^undefined$/gi.test(value))return undefined;
+						//Return empty string.
+						else if(/^$/g.test(value))return "";
+						//handle special integers and floats
+						else if(!options.ignoreNumbers&&options.preserveFullNumbers&&/^((0[0-9]*)|(0[0-9]*\.[0-9]+))$/g.test(value))return value;
+						//handle integers and floats
+						else if(!options.ignoreNumbers&&/^(([0-9]+)|([0-9.]+))$/g.test(value))return parseFloat(value);
+						//Parsable values return proper values.
+						else if(/^(true|false|null|\[\]|\{\})$/gi.test(value))return JSON.parse(value);
+						//For objects and Arrays, the only way for them to be here is if they are base64 encoded. If the base64 was encoded and properly, then it shouldn't even need it's values parsed.
+						///\["(.+|.+",".+)"\]|{([^:]+:[^:]+|([^:]+:[^:]+,)+[^:]+:[^:]+)}/gi.test(atob(value))
+						else if(/^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/.test(value)&&this.isJSON(this.b64DecodeUnicode(value))){
+							//This could never be infinite or recursive so it could be completely parsed but let them decide they want to do that.
+							var decodedb64=JSON.parse(this.b64DecodeUnicode(value));
+							if(this.ofTypes(value,[Object,Array]))return this.parse(decodedb64,options);
+							return decodedb64;
+						}
+						//Check if it is something that I am not checking for.
+						else if(this.isJSON(value)&&!(options.ignoreNumbers&&/^[0-9.]+$/g))return JSON.parse(value);
+						//Probably a string.
+						else return value;
+					}
+				}
+				
+				static ofTypes(obj=undefined,types=[]){
+					if(types&&types.constructor!==Array)types=[types];
+					if(!obj||!types||!obj.constructor||types.length===0)return null;
+					let boolean=types.map((v)=>{if(obj.constructor!==v)return false;return true;});
+					return boolean.includes(true)?true:false;
+				}
+				
+				static b64DecodeUnicode(str){//Modified from: https://stackoverflow.com/a/30106551
+					// Going backwards: from bytestream, to percent-encoding, to original string.
+					try{
+						return decodeURIComponent(atob(str).split('').map(function(c){
+							return '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2);
+						}).join(''));
+					}catch(e){
+						return null;
+					}
+				}
+				
 			}
-			pack.onStart();
 		</script>
 	</head>
 	<body>
-	<h2></h2>
-	<div><ul class="list"></ul></div>
+		<h2>JSON loading...</h2><button onClick="pack.onStart();this.remove();" style="width:100px;height:20px;">Click to load</button>
+		<div>
+			<ul class="list"></ul>
+		</div>
+		<footer>
+			<script>
+				//pack.onStart();
+			</script>
+		</footer>
 	</body>
-	<footer></footer>
 </html>
