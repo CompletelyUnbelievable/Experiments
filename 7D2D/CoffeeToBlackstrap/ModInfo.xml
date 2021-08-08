@@ -5,6 +5,6 @@
 		<Description value="Adds a recipe to convert coffee to blackstrap coffee" />
 		<Author value="CompletelyUnbelievable" />
 		<Version value="A19" />
-		<Website value="" />
+		<Website value="https://github.com/CompletelyUnbelievable/Experiments" />
 	</ModInfo>
 </xml>
