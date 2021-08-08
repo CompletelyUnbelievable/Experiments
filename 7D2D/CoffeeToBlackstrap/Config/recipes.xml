@@ -1,0 +1,11 @@
+<coffeetoblackstrap>
+	<append xpath="/recipes">
+		<recipe name="drinkJarBlackStrapCoffee" count="1" craft_time="5" craft_area="campfire" craft_tool="toolCookingPot" tags="perkMasterChef,learnable">
+			<ingredient name="drinkJarCoffee" count="1"/>
+			<ingredient name="resourceGunPowder" count="5"/>
+			<effect_group>
+				<passive_effect name="CraftingIngredientCount" level="4,5" operation="base_add" value="-1" tags="resourceGunPowder"/>
+			</effect_group>
+		</recipe>
+	</append>
+</coffeetoblackstrap>
