@@ -4,10 +4,11 @@
 	<title>Image Embedder</title>
 	<meta content="Image Embedder" property="og:title" />
 	<meta content="For embedding certain images in Discord" property="og:description" />
-	<meta content="" property="og:url" />
 	<meta content="" property="og:image:secure_url" />
+	<meta content="" property="og:image" />
+	<meta content="image/png" property="og:image:type" />
 	<!-- <meta http-equiv="refresh" content="0; https://github.com/CompletelyUnbelievable/Experiments"> -->
-	<script>global={};global.here=decodeURI(window.location.search.replace(/\?query=/gi, ""));global.ogUrl=document.querySelector('meta[property="og:url"]').setAttribute("content", global.here);global.ogImage=document.querySelector('meta[property="og:image:secure_url"]').setAttribute("content", global.here);/*global.img=document.createElement("img");global.img.setAttribute("src", global.here);global.img.setAttribute("align", "middle");document.body.append(global.img);*//*global.httpEquiv=document.querySelector('meta[http-equiv="refresh"]').setAttribute("content", "0; "+global.here);*/</script>
+	<script>global={};global.here=decodeURI(window.location.search.replace(/\?query=/gi, ""));global.ogUrl=document.querySelector('meta[property="og:image"]').setAttribute("content", global.here);global.ogImage=document.querySelector('meta[property="og:image:secure_url"]').setAttribute("content", global.here);</script>
 </head>
 <body onload="document.querySelector('img').setAttribute('src', global.here);"><img src="" align="middle" /></body>
 </html>
