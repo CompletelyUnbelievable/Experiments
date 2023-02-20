@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Image Embedder</title>
+	<meta content="Image Embedder" property="og:title" />
+	<meta content="For embedding certain images in Discord" property="og:description" />
+	<meta content="" property="og:image:secure_url" />
+	<meta content="" property="og:image" />
+	<meta content="image/png" property="og:image:type" />
+	<!-- <meta http-equiv="refresh" content="0; https://github.com/CompletelyUnbelievable/Experiments"> -->
+	<script>global={};global.here=decodeURI(window.location.search.replace(/\?query=/gi, ""));global.ogUrl=document.querySelector('meta[property="og:image"]').setAttribute("content", global.here.replace(/^https:\/\//i, "http://"));global.ogImage=document.querySelector('meta[property="og:image:secure_url"]').setAttribute("content", global.here.replace(/^http:\/\//i, "https://"));</script>
+</head>
+<body onload="document.querySelector('img').setAttribute('src', global.here);"><img src="" align="middle" /></body>
+</html>
